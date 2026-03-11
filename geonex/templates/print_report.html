@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEONEX Report — {{ prediction | replace('_',' ') | title }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        /* ===================== BASE ===================== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f0f4f8;
+            color: #1a202c;
+            font-size: 13px;
+            line-height: 1.65;
+        }
+
+        /* ===================== TOP BAR (hidden on print) ===================== */
+        #top-bar {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 99;
+        }
+
+        #top-bar .title {
+            font-weight: 700;
+            font-size: 15px;
+            color: #38bdf8;
+        }
+
+        #top-bar .sub {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .print-btn {
+            margin-left: auto;
+            background: #0ea5e9;
+            color: #fff;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .print-btn:hover {
+            background: #0284c7;
+        }
+
+        /* ===================== REPORT WRAPPER ===================== */
+        .report {
+            max-width: 900px;
+            margin: 28px auto;
+            padding: 0 16px 60px;
+        }
+
+        /* ===================== HEADER ===================== */
+        .report-header {
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 28px 32px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .report-header-left .org {
+            font-size: 11px;
+            font-weight: 700;
+            color: #0ea5e9;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .report-header-left h1 {
+            font-size: 22px;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 4px 0 2px;
+        }
+
+        .report-header-left .meta {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .report-header-left .meta strong {
+            color: #334155;
+        }
+
+        .report-header-right {
+            text-align: right;
+        }
+
+        .report-header-right .class-badge {
+            display: inline-block;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+            border-radius: 20px;
+            padding: 4px 16px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .report-header-right .confidence-big {
+            display: block;
+            font-size: 28px;
+            font-weight: 900;
+            color: #0f172a;
+        }
+
+        .report-header-right .conf-label {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* ===================== SECTIONS ===================== */
+        .section {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 22px 26px;
+            margin-bottom: 18px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #0ea5e9;
+            border-bottom: 2px solid #e0f2fe;
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+        }
+
+        /* ===================== PRIMARY ANALYSIS GRID ===================== */
+        .primary-grid {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 22px;
+            align-items: center;
+        }
+
+        .primary-grid img {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            object-fit: cover;
+            max-height: 180px;
+        }
+
+        .prediction-name {
+            font-size: 26px;
+            font-weight: 900;
+            color: #0f172a;
+            margin-bottom: 6px;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .stat {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 14px;
+            min-width: 110px;
+        }
+
+        .stat .lbl {
+            font-size: 10px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+        }
+
+        .stat .val {
+            font-size: 18px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .stat.highlight {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+        }
+
+        .stat.highlight .val {
+            color: #1d4ed8;
+        }
+
+        /* ===================== CHART ===================== */
+        #simChart {
+            max-height: 200px;
+        }
+
+        /* ===================== TABLE ===================== */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        th {
+            background: #f1f5f9;
+            color: #475569;
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 1px;
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+        }
+
+        tr:first-child td {
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .bar-cell {
+            vertical-align: middle;
+        }
+
+        .bar-bg {
+            background: #f1f5f9;
+            border-radius: 4px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #0ea5e9, #6366f1);
+        }
+
+        tr:first-child .bar-fill {
+            background: linear-gradient(90deg, #22c55e, #0ea5e9);
+        }
+
+        /* ===================== DETAILED REPORT ===================== */
+        .detailed-text {
+            white-space: pre-line;
+            color: #334155;
+            line-height: 1.8;
+        }
+
+        .detailed-text .section-heading {
+            font-size: 10px;
+            font-weight: 800;
+            color: #0ea5e9;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            display: block;
+            margin-top: 14px;
+            margin-bottom: 2px;
+        }
+
+        /* ===================== FOOTER ===================== */
+        .report-footer {
+            text-align: center;
+            margin-top: 32px;
+            font-size: 11px;
+            color: #94a3b8;
+            padding-top: 12px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        /* ===================== PRINT OVERRIDES ===================== */
+        @media print {
+            @page {
+                margin: 12mm 14mm;
+            }
+
+            #top-bar {
+                display: none !important;
+            }
+
+            body {
+                background: #fff;
+            }
+
+            .report {
+                margin: 0;
+                padding: 0;
+                max-width: 100%;
+            }
+
+            .section,
+            .report-header {
+                page-break-inside: avoid;
+            }
+
+            /* Force white backgrounds everywhere */
+            .section,
+            .report-header,
+            .stat,
+            th,
+            td {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Top bar (screen only) -->
+    <div id="top-bar">
+        <span class="title">&#127760; GEONEX</span>
+        <span class="sub">Satellite Analysis Report</span>
+        <button class="print-btn" onclick="window.print()">
+            &#128438; Print / Save as PDF
+        </button>
+    </div>
+
+    <div class="report">
+
+        <!-- HEADER -->
+        <div class="report-header">
+            <div class="report-header-left">
+                <div class="org">GEONEX &mdash; Next-Gen Geo Analytics</div>
+                <h1>Satellite Image Analysis Report</h1>
+                <p class="meta">
+                    Location: <strong>{{ location | title }}</strong> &nbsp;&bull;&nbsp;
+                    Generated: <strong id="genDate"></strong>
+                </p>
+            </div>
+            <div class="report-header-right">
+                <span class="class-badge">{{ prediction | replace('_',' ') | title }}</span><br>
+                <span class="confidence-big">{{ confidence }}%</span>
+                <span class="conf-label">Confidence</span>
+            </div>
+        </div>
+
+        <!-- PRIMARY ANALYSIS -->
+        <div class="section">
+            <div class="section-title">&#128204; Primary Classification Result</div>
+            <div class="primary-grid">
+                <img src="{{ uploaded_image }}" alt="Satellite Image" crossorigin="anonymous" />
+                <div>
+                    <div class="prediction-name">{{ prediction | replace('_',' ') | title }}</div>
+                    <p style="color:#64748b; font-size:12px; margin-bottom:8px;">
+                        Model confidence: <strong style="color:#0f172a;">{{ confidence }}%</strong>
+                    </p>
+                    <div class="stats-row">
+                        <div class="stat highlight">
+                            <div class="lbl">Match Score</div>
+                            <div class="val">{{ confidence }}%</div>
+                        </div>
+                        <div class="stat">
+                            <div class="lbl">Location</div>
+                            <div class="val" style="font-size:13px;">{{ location | title }}</div>
+                        </div>
+                        <div class="stat">
+                            <div class="lbl">Land Class</div>
+                            <div class="val" style="font-size:13px;">{{ prediction | replace('_',' ') | title }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIMILARITY GRAPH -->
+        {% if top_predictions %}
+        <div class="section">
+            <div class="section-title">&#128202; Training Data Similarity Graph</div>
+            <p style="font-size:11px; color:#94a3b8; margin-bottom:14px;">
+                Confidence scores of the top predicted land-cover classes vs. model training data.
+            </p>
+            <canvas id="simChart"></canvas>
+        </div>
+        {% endif %}
+
+        <!-- PREDICTIONS TABLE -->
+        {% if top_predictions %}
+        <div class="section">
+            <div class="section-title">&#128203; Top Prediction Scores</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Land Cover Class</th>
+                        <th>Score</th>
+                        <th style="width:35%">Match Strength</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in top_predictions %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ p.class_name | replace('_',' ') | title }}</td>
+                        <td><strong>{{ p.confidence }}%</strong></td>
+                        <td class="bar-cell">
+                            <div class="bar-bg">
+                                <div class="bar-fill" style="width:{{ p.confidence }}%;"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- DETAILED REPORT -->
+        {% if detailed_report %}
+        <div class="section">
+            <div class="section-title">&#128196; Detailed Analysis Report</div>
+            <div class="detailed-text">{{ detailed_report }}</div>
+        </div>
+        {% endif %}
+
+        <!-- FOOTER -->
+        <div class="report-footer">
+            Powered by <strong>GEONEX</strong> &mdash; Next-Gen Geo Analytics &amp; Cloud Integration &nbsp;&bull;&nbsp;
+            Report generated on <span id="footerDate"></span>
+        </div>
+
+    </div><!-- /report -->
+
+    <script>
+        var d = new Date();
+        var ds = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+        document.getElementById('genDate').textContent = ds;
+        document.getElementById('footerDate').textContent = ds;
+
+        {% if top_predictions %}
+        (function () {
+            var preds = {{ top_predictions | tojson | safe
+        }};
+        var labels = preds.map(function (p) { return p.class_name.replace(/_/g, ' ').toUpperCase(); });
+        var data = preds.map(function (p) { return p.confidence; });
+        new Chart(document.getElementById('simChart'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Confidence (%)',
+                    data: data,
+                    backgroundColor: ['#22c55e', '#38bdf8', '#818cf8', '#fb923c', '#f472b6'],
+                    borderWidth: 0,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: function (c) { return c.raw + '% Match'; } } }
+                },
+                scales: {
+                    x: { max: 100, ticks: { color: '#64748b' }, grid: { color: '#f1f5f9' } },
+                    y: { ticks: { color: '#334155', font: { size: 11 } }, grid: { display: false } }
+                }
+            }
+        });
+    }) ();
+        {% endif %}
+    </script>
+</body>
+
+</html>

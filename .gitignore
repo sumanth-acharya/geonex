@@ -1,6 +1,30 @@
-.env
-temp.txt
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+eggs/
+*.egg
 
-ISatelitales/
-Models/
-Models.zip
+# Virtual environment
+venv/
+env/
+.env
+geo-env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.sqlite3

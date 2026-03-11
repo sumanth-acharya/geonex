@@ -1,0 +1,66 @@
+============================================
+   GEONEX - Project Running Commands
+============================================
+
+PREREQUISITES:
+- Python 3.x installed
+- MySQL Server installed and running
+- pip (Python package manager)
+
+--------------------------------------------
+STEP 1: Open terminal and navigate to the project folder
+--------------------------------------------
+cd C:\Users\shrid\Desktop\Geonex\geonex
+
+--------------------------------------------
+STEP 2: Create a virtual environment (first time only)
+--------------------------------------------
+python -m venv geo-env
+
+--------------------------------------------
+STEP 3: Activate the virtual environment
+--------------------------------------------
+geo-env\Scripts\activate
+
+--------------------------------------------
+STEP 4: Install dependencies (first time only)
+--------------------------------------------
+pip install -r requirements.txt
+
+--------------------------------------------
+STEP 5: Set up the MySQL database (first time only)
+--------------------------------------------
+   a) Open MySQL shell or MySQL Workbench
+   b) Create the database:
+      CREATE DATABASE geonex;
+   c) Select the database:
+      USE geonex;
+   d) Run the SQL file to create tables:
+      SOURCE geonex.sql;
+
+--------------------------------------------
+STEP 6: Configure the .env file (first time only)
+--------------------------------------------
+   Make sure the .env file has the correct values:
+   - DB_HOST = localhost
+   - DB_USER = root
+   - DB_PASSWORD = (your MySQL root password)
+   - DB_NAME = geonex
+   - FLASK_SECRET_KEY = (any secret string)
+   - CLOUDINARY_CLOUD_NAME = (your Cloudinary cloud name)
+   - CLOUDINARY_API_KEY = (your Cloudinary API key)
+   - CLOUDINARY_API_SECRET = (your Cloudinary API secret)
+
+--------------------------------------------
+STEP 7: Run the Flask application
+--------------------------------------------
+python app.py
+
+--------------------------------------------
+STEP 8: Open the application in browser
+--------------------------------------------
+http://localhost:4000
+
+============================================
+   TO STOP THE SERVER: Press Ctrl + C
+============================================
