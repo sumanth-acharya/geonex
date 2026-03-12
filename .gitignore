@@ -1,3 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+eggs/
+*.egg
+
+# Virtual environment
+venv/
+env/
 .env
 temp.txt
 
@@ -5,3 +19,18 @@ Isatelitales/
 Models/
 Models.zip
 dummy.py
+geo-env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.sqlite3
